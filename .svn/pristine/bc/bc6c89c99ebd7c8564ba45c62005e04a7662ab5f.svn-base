@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="Commpop">
+
+    
+    
+    
+    <select id="selectCodeList" resultClass="retail.commpop.service.CommPopVO"  parameterClass="retail.commpop.service.CommPopVO">
+		SELECT 
+			GRADE_ITEM_NAME, 
+			GRADE_ITEM_NUM
+		FROM  GRADE_ITEMS 
+		WHERE GRADE_ITEM_TYPE_CODE = #GRADE_ITEM_TYPE_CODE# AND USE_YN='Y'
+		ORDER BY SORT
+    </select>
+    
+    <select id="selectDeptList" resultClass="retail.admin.service.AMainDeptVO"  parameterClass="retail.admin.service.AMainDeptVO">
+		SELECT 
+			DEPART_NUM, 
+			DEPART_NAME
+		FROM  DEPARTS 
+		WHERE USE_YN='Y'
+		ORDER BY DEPART_NUM
+    </select>
+    
+    <select id="selectUserList" resultClass="retail.admin.service.AMainUserVO"  parameterClass="retail.admin.service.AMainUserVO">
+		SELECT 
+			USER_NUM, 
+			USER_NAME
+		FROM  USERS 
+		WHERE USE_YN='Y'
+		ORDER BY USER_NUM
+    </select>
+    
+     
+</sqlMap>

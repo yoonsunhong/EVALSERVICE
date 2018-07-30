@@ -1,0 +1,787 @@
+package retail.eval.web;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+import retail.common.CommonUtil;
+import retail.common.JqEvalResult;
+import retail.common.JqResult;
+import retail.eval.service.EvalResultVO;
+import retail.eval.service.EvalService;
+import retail.eval.service.EvalVO;
+import retail.eval.service.GradeItemVO;
+
+
+@Controller
+public class EvalController {	
+	
+	private static final boolean D = true;
+
+	@Autowired
+	private EvalService evalService;
+	
+	@RequestMapping(value = "/goEval.do", method = {RequestMethod.GET, RequestMethod.POST})
+	public ModelAndView goEval(HttpServletRequest request, HttpServletResponse response, ModelMap model)throws Exception 
+	{		
+		if(D) System.out.println("Start goEval.do");
+		
+		ModelAndView mavEval = new ModelAndView();
+		
+		JqEvalResult jqEvalResult = new JqEvalResult();
+		String period_to = "";
+		
+		try {
+		
+			EvalVO paEvalVo = new EvalVO();		
+			paEvalVo.setUSER_NUM(CommonUtil.getEnv(request.getSession()).getUser_num());
+			paEvalVo.setEVAL_WITH("1");
+			 
+			EvalVO dataEval = evalService.getLastEvalData(paEvalVo);
+					
+			if(dataEval != null) {
+				
+				period_to = dataEval.getPERIOD_TO();
+	
+				jqEvalResult.setResult(0);					
+				jqEvalResult.addEvalData(dataEval);			
+				
+				EvalResultVO paEvalResultVo = new EvalResultVO();
+				paEvalResultVo.setEVAL_INDEX(dataEval.getEVAL_INDEX());
+				paEvalResultVo.setEVAL_TYPE("0");
+				
+				List<EvalResultVO> listEvalResult  = evalService.getEvalResultData(paEvalResultVo);			
+				
+				if( listEvalResult.size() > 0 ) {
+					for(EvalResultVO evalResultVO : listEvalResult) {
+						jqEvalResult.addEvalResultData(evalResultVO);
+					} 				
+				}
+				
+				int upevalFlag = Integer.parseInt(dataEval.getUPEVAL_WITH());
+				
+				if(upevalFlag == 1) {
+					paEvalResultVo = new EvalResultVO();
+					paEvalResultVo.setEVAL_INDEX(dataEval.getEVAL_INDEX());
+					paEvalResultVo.setEVAL_TYPE("1");
+					
+					List<EvalResultVO> listUpEvalResult  = evalService.getEvalResultData(paEvalResultVo);
+					
+					if( listUpEvalResult.size() > 0 ) {
+						for(EvalResultVO evalResultVO : listUpEvalResult) {
+							jqEvalResult.addUpEvalResultData(evalResultVO);
+						} 				
+					}					
+				}	
+			}
+			else {				
+				jqEvalResult.setResult(1);
+				
+				String user_date = CommonUtil.getEnv(request.getSession()).getUser_date();				
+				user_date = user_date.substring(0,6);
+				
+				user_date = CommonUtil.digitPeriod(user_date, -1);
+				
+				if(Integer.parseInt(user_date) > Integer.parseInt(CommonUtil.DEFAULT_PERIOD)) {
+					period_to = user_date;
+				}
+				else {
+					period_to = CommonUtil.DEFAULT_PERIOD; // default 기간 제한값
+				}
+			}
+			
+		}
+		catch (IOException e) {
+			if(D) System.err.println("goEval.do IOException Occured1 : " + e.toString());
+			
+			jqEvalResult.setResult(2);
+			period_to = CommonUtil.DEFAULT_PERIOD; // default 기간 제한값
+		}
+		catch (Exception e) {
+			if(D) System.err.println("goEval.do Exception Occured1 : " + e.toString());
+			
+			jqEvalResult.setResult(2);
+			period_to = CommonUtil.DEFAULT_PERIOD; // default 기간 제한값
+		}
+		
+		// 등급정보 출력
+		try {
+			List<GradeItemVO> listGradeItem = evalService.getGradeItemData();	
+			
+			if(listGradeItem.size() > 0) {
+				mavEval.addObject("grade", listGradeItem);	
+			}
+		}
+		catch(IOException e) {
+			if(D) System.err.println("goEval.do IOException Occured2 : " + e.toString());
+		}
+		catch(Exception e) {
+			if(D) System.err.println("goEval.do Exception Occured2 : " + e.toString());
+		}
+		
+		String curPeriod = CommonUtil.getCurPeriod();
+		
+		//List<String> periodUnder = CommonUtil.getUnderPeriod(curPeriod);	
+		//List<String> periodUpper = CommonUtil.getUpperPeriod(curPeriod);			
+
+		List<String> periodUnder = CommonUtil.getDefaultPeriod(curPeriod);	
+		List<String> periodUpper = CommonUtil.getDefaultPeriod(curPeriod);
+				
+		List<String> periodMonth = CommonUtil.getPeriod(period_to);			
+		String jsonStr = jqEvalResult.getJsonString();
+
+		//System.out.println("goEval.do - jsonStr : " + jsonStr);
+		
+		mavEval.addObject("json_result", jsonStr);
+		mavEval.addObject("period", periodMonth);
+		mavEval.addObject("periodunder", periodUnder);	
+		mavEval.addObject("periodupper", periodUpper);			
+		mavEval.addObject("periodlen", periodMonth.size());		
+		mavEval.setViewName("/retail/eval/eval");
+		
+		return mavEval;
+	}
+		
+	@RequestMapping(value = "/getEvalData.do", method = RequestMethod.POST)
+	public void getEvalData(HttpServletRequest request, HttpServletResponse response, ModelMap model)throws Exception 
+	{		
+		if(D) System.out.println("Start getEvalData.do");
+		
+		try {			
+			String user_num	= request.getParameter("user_num");
+			String eval_index	= request.getParameter("eval_index");
+			String eval_flag	= request.getParameter("eval_flag");
+			
+			int evalFlag = Integer.parseInt(eval_flag);
+			
+			JqEvalResult jqEvalResult = new JqEvalResult();
+			
+			EvalVO paEvalVo = new EvalVO();
+			paEvalVo.setUSER_NUM(user_num);
+			paEvalVo.setEVAL_INDEX(eval_index);
+			paEvalVo.setEVAL_WITH("1");
+			
+			if(evalFlag == 1) {
+				paEvalVo.setUPEVAL_WITH("1");
+			}			
+			
+			EvalVO dataEval = evalService.getEvalData(paEvalVo);
+			
+			if(dataEval != null) {
+				
+				jqEvalResult.setResult(0);
+				jqEvalResult.addEvalData(dataEval);
+				
+				EvalResultVO paEvalResultVo = new EvalResultVO();
+				paEvalResultVo.setEVAL_INDEX(dataEval.getEVAL_INDEX());
+				paEvalResultVo.setEVAL_TYPE("0");
+				
+				List<EvalResultVO> listEvalResult  = evalService.getEvalResultData(paEvalResultVo);
+
+				if( listEvalResult.size() > 0 ) {
+					for(EvalResultVO evalResultVO : listEvalResult) {
+						jqEvalResult.addEvalResultData(evalResultVO);
+					} 				
+				}
+				
+				int upevalFlag = Integer.parseInt(dataEval.getUPEVAL_WITH());
+				
+				if(upevalFlag == 1) {
+					paEvalResultVo = new EvalResultVO();
+					paEvalResultVo.setEVAL_INDEX(dataEval.getEVAL_INDEX());
+					paEvalResultVo.setEVAL_TYPE("1");
+					
+					List<EvalResultVO> listUpEvalResult  = evalService.getEvalResultData(paEvalResultVo);
+	
+					if( listUpEvalResult.size() > 0 ) {
+						for(EvalResultVO evalResultVO : listUpEvalResult) {
+							jqEvalResult.addUpEvalResultData(evalResultVO);
+						} 				
+					}	
+				}
+				
+//				List<GradeItemVO> listGradeItem = evalService.getGradeItemData();				
+//				if(listGradeItem.size() > 0) {
+//					for(GradeItemVO gradeItemVo : listGradeItem) {
+//						jqEvalResult.addGradeItemData(gradeItemVo);					
+//					}
+//				}
+			}
+			else {
+				jqEvalResult.setResult(1);
+			}
+			
+			String jsonStr = jqEvalResult.getJsonString(); 	
+
+			//System.out.println("getEvalData.do - jsonStr : " + jsonStr);
+			
+			response.setContentType("text/json; charset=utf-8"); 
+			response.getWriter().print(jsonStr);
+			
+		}
+		catch (IOException e) {
+			if(D) System.err.println("getEvalData.do IOException Occured : " + e.toString());
+		}
+		catch (Exception e) {
+			if(D) System.err.println("getEvalData.do Exception Occured : " + e.toString());
+		}
+	}
+	
+	@RequestMapping(value = "/goEvalProcess.do", method = RequestMethod.POST)
+	public ModelAndView goEvalProcess(HttpServletRequest request, HttpServletResponse response, ModelMap model)throws Exception 
+	{		
+		if(D) System.out.println("Start goEvalProcess.do");
+		
+		ModelAndView mavEvalProcess = new ModelAndView();
+				
+		String period_from = request.getParameter("PERIOD_FROM");
+		String period_to = request.getParameter("PERIOD_TO");
+
+		JqEvalResult jqEvalResult = new JqEvalResult();
+		
+		try {
+			EvalVO paEvalVo = new EvalVO();
+			paEvalVo.setUSER_NUM(CommonUtil.getEnv(request.getSession()).getUser_num());
+			
+			List<EvalResultVO> listEvalResult  = evalService.getEvalRateData(paEvalVo);	
+			
+			if(listEvalResult.size() > 0) {
+				jqEvalResult.setResult(0);
+				
+				List<GradeItemVO> listGradeItem = evalService.getGradeItemData();		
+				
+				String defaultNum = "0";
+				String defaultName = "None";
+				
+				if(listGradeItem.size() == 1) {
+					defaultNum = listGradeItem.get(0).getGRADE_ITEM_NUM();
+					defaultName = listGradeItem.get(0).getGRADE_ITEM_NAME();
+				}
+				else {
+					int size = listGradeItem.size();
+					size = size -2;
+					defaultNum = listGradeItem.get(size).getGRADE_ITEM_NUM();
+					defaultName = listGradeItem.get(size).getGRADE_ITEM_NAME();
+				}				 
+				
+				for(EvalResultVO evalResultVo : listEvalResult) {				
+					evalResultVo.setGRADE_ITEM_NUM(defaultNum);
+					evalResultVo.setGRADE_ITEM_NAME(defaultName);
+					evalResultVo.setEVAL_COMMENT("");
+					
+					jqEvalResult.addEvalResultData(evalResultVo);
+				}
+				
+//				List<GradeItemVO> listGradeItem = evalService.getGradeItemData();				
+//				if(listGradeItem.size() > 0) {
+//					for(GradeItemVO gradeItemVo : listGradeItem) {
+//						jqEvalResult.addGradeItemData(gradeItemVo);					
+//					}
+//				}
+			}
+			else {
+				jqEvalResult.setResult(1);
+			}					
+		}
+		catch (IOException e) {
+			if(D) System.err.println("goEvalProcess.do IOException Occured1 : " + e.toString());
+		}
+		catch (Exception e) {
+			if(D) System.err.println("goEvalProcess.do Exception Occured1 : " + e.toString());
+		}
+		
+		// 등급정보 출력
+		try {
+			List<GradeItemVO> listGradeItem = evalService.getGradeItemData();	
+			
+			if(listGradeItem.size() > 0) {
+				mavEvalProcess.addObject("grade", listGradeItem);	
+			}
+		}
+		catch(IOException e) {
+			if(D) System.err.println("goEvalProcess.do IOException Occured2 : " + e.toString());
+		}
+		catch(Exception e) {
+			if(D) System.err.println("goEvalProcess.do Exception Occured2 : " + e.toString());
+		}
+		
+		String jsonStr = jqEvalResult.getJsonString();		
+
+		//System.out.println("goEvalProcess.do - jsonStr : " + jsonStr);
+		
+		mavEvalProcess.addObject("json_result", jsonStr);			
+		mavEvalProcess.addObject("period_from", period_from);
+		mavEvalProcess.addObject("period_to", period_to);	
+		mavEvalProcess.setViewName("/retail/eval/eval_process");
+		
+		return mavEvalProcess; 
+	}
+	
+	@RequestMapping(value = "/setEvalData.do", method = RequestMethod.POST)
+	public void setEvalData(HttpServletRequest request, HttpServletResponse response, ModelMap model)throws Exception 
+	{			
+		if(D) System.out.println("Start setEvalData.do");
+		
+		try {
+			String period_from = request.getParameter("period_from");
+			String period_to = request.getParameter("period_to");		
+			String json_result = request.getParameter("json_result");				
+			json_result = json_result.replaceAll("&quot;", "\"");
+			
+			if(D) System.out.println("period_from : " + period_from);
+			if(D) System.out.println("period_to : " + period_to);
+//			System.out.println("json_result : " + json_result);
+			
+			JSONParser parser =  new JSONParser();			
+			JSONObject mainObject = (JSONObject)parser.parse(json_result);			
+			JSONArray evalResultArray = (JSONArray)mainObject.get("eval_results_array");
+			
+			String eval_results_count = (String)mainObject.get("eval_results_count");
+			if(D) System.out.println("eval_results_count : " + eval_results_count);
+			int evalCount = Integer.parseInt(eval_results_count);
+			
+			if(D) System.out.println("check setEvalData.do 1");
+			
+			EvalVO dataEval = new EvalVO();
+			{
+				//dataEval.setEVAL_INDEX(period_to + CommonUtil.getEnv(request.getSession()).getUser_num());
+				dataEval.setUSER_NUM(CommonUtil.getEnv(request.getSession()).getUser_num());
+				dataEval.setUSER_NAME(CommonUtil.getEnv(request.getSession()).getUser_name());
+				dataEval.setDEPART_NUM(CommonUtil.getEnv(request.getSession()).getDepart_num());
+				dataEval.setDEPART_NAME(CommonUtil.getEnv(request.getSession()).getDepart_name());			
+				dataEval.setPERIOD_FROM(period_from);
+				dataEval.setPERIOD_TO(period_to);
+				dataEval.setEVAL_WITH("1");
+				dataEval.setUPEVAL_WITH("0");
+				dataEval.setUPUSER_NUM(CommonUtil.getEnv(request.getSession()).getUpuser_num());
+				dataEval.setUPUSER_NAME(CommonUtil.getEnv(request.getSession()).getUpuser_name());
+			}
+			
+			// insert part
+			int nindex = evalService.insertEvalData(dataEval);	
+			if(D) System.out.println("check setEvalData.do index : " + nindex);
+
+			if(D) System.out.println("check setEvalData.do 2");
+			List<EvalResultVO> listEvalResult = new ArrayList<EvalResultVO>();
+			
+			for(int i = 0 ; i < evalCount ; i++) {				
+				JSONObject jObj = (JSONObject)parser.parse(evalResultArray.get(i).toString());	
+				EvalResultVO paEvalResultVo = new EvalResultVO();
+				{
+					paEvalResultVo.setEVAL_INDEX((String)Integer.toString(nindex));
+					paEvalResultVo.setEVAL_ITEM_NUM((String)jObj.get("eval_item_num"));
+					paEvalResultVo.setEVAL_ITEM_NAME((String)jObj.get("eval_item_name"));
+					paEvalResultVo.setEVAL_RATE((String)jObj.get("eval_rate"));
+					paEvalResultVo.setGRADE_ITEM_NUM((String)jObj.get("grade_num"));
+					paEvalResultVo.setGRADE_ITEM_NAME((String)jObj.get("grade_name"));
+					paEvalResultVo.setEVAL_TYPE("0");
+					paEvalResultVo.setEVAL_COMMENT((String)jObj.get("eval_comment"));	
+				}					
+				listEvalResult.add(paEvalResultVo);				
+			}
+			
+			if(D) System.out.println("check setEvalData.do 3");
+			
+			// insert part
+			evalService.insertEvalResultData(listEvalResult);	
+			
+			// check part
+			if(D) System.out.println("check setEvalData.do 4");
+			JqResult jqResult = new JqResult();
+			jqResult.setResult(0);
+			
+			String jsonStr = jqResult.getJsonString(); 	
+			response.setContentType("text/json; charset=utf-8"); 
+			response.getWriter().print(jsonStr);
+			
+		}
+		catch (IOException e) {
+			if(D) System.err.println("setEvalData.do IOException Occured : " + e.toString());
+		}
+		catch (Exception e) {
+			if(D) System.err.println("setEvalData.do Exception Occured : " + e.toString());
+		}
+	}
+	
+	@RequestMapping(value = "/updateEvalResult.do", method = RequestMethod.POST)
+	public void updateEvalResult(HttpServletRequest request, HttpServletResponse response, ModelMap model)throws Exception 
+	{			
+		if(D) System.out.println("Start updateEvalResult.do");
+		
+		try {
+			String json_result = request.getParameter("json_result");				
+			json_result = json_result.replaceAll("&quot;", "\"");
+			if(D) System.out.println("json_result : " + json_result);
+			
+			int resultFlag = 0;
+			JqResult jqResult = new JqResult();
+			
+			JSONParser parser =  new JSONParser();			
+			JSONObject mainObject = (JSONObject)parser.parse(json_result);		
+			
+			String eval_type = request.getParameter("eval_type");
+			int nEvalType = Integer.parseInt(eval_type);
+			
+			int nUpdateFlag = 0; 
+			// evaltype이 0일때(본인평가) 평가이력 체크하여 차상위평가가 진행된경우 (upeval_with가 1) 평가 갱신을 건너뛰기 위한 기능 추가
+			// nUpevalFlag가 1이 되면 평가 갱신을 건너뛰고 result에 2 값을 실어 리턴. jsp에서는 값을 받아 화면 갱신 진행.
+			
+			if(nEvalType == 0) {
+				
+				EvalVO paEvalVo = new EvalVO();
+				{
+					paEvalVo.setEVAL_INDEX((String)mainObject.get("eval_index"));
+					paEvalVo.setUSER_NUM(CommonUtil.getEnv(request.getSession()).getUser_num());
+					paEvalVo.setEVAL_WITH("1");
+				}				
+				
+				EvalVO dataEval = evalService.getEvalData(paEvalVo);
+				
+				nUpdateFlag = Integer.parseInt(dataEval.getUPEVAL_WITH());
+				
+				if(nUpdateFlag == 1) {
+					jqResult.setResult(2);
+				}
+			}
+			
+			if(nUpdateFlag == 0) {
+				
+				EvalResultVO paEvalResultVo = new EvalResultVO();
+				{
+					paEvalResultVo.setEVAL_INDEX((String)mainObject.get("eval_index"));
+					paEvalResultVo.setEVAL_ITEM_NUM((String)mainObject.get("eval_item_num"));
+					paEvalResultVo.setEVAL_ITEM_NAME((String)mainObject.get("eval_item_name"));
+					paEvalResultVo.setEVAL_RATE((String)mainObject.get("eval_rate"));
+					paEvalResultVo.setGRADE_ITEM_NUM((String)mainObject.get("grade_num"));
+					paEvalResultVo.setGRADE_ITEM_NAME((String)mainObject.get("grade_name"));
+					paEvalResultVo.setEVAL_TYPE((String)mainObject.get("eval_type"));
+					paEvalResultVo.setEVAL_COMMENT((String)mainObject.get("eval_comment"));	
+				}
+				
+				resultFlag = evalService.updateEvalResultData(paEvalResultVo);
+				if(D) System.out.println("resultFlag : " + resultFlag);
+				
+				if(resultFlag == 1) {
+					jqResult.setResult(0);
+				}
+				else {
+					jqResult.setResult(1);
+				}
+			}			
+			
+			String jsonStr = jqResult.getJsonString(); 	
+			response.setContentType("text/json; charset=utf-8"); 
+			response.getWriter().print(jsonStr);
+			
+		}
+		catch (IOException e) {
+			if(D) System.err.println("updateEvalResult.do IOException Occured : " + e.toString());
+		}
+		catch (Exception e) {
+			if(D) System.err.println("updateEvalResult.do Exception Occured : " + e.toString());
+		}
+	}
+	
+	
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/goUpEval.do", method = RequestMethod.POST)
+	public ModelAndView goUpEval(HttpServletRequest request, HttpServletResponse response, ModelMap model)throws Exception 
+	{
+		if(D) System.out.println("Start goUpEval.do");
+		
+		ModelAndView mavUpEval = new ModelAndView();
+		String user_num = request.getParameter("USER_NUM");	
+		
+		// 선택한 사원정보 데이터 입력
+		JSONObject user_data = new JSONObject();
+		{
+			user_data.put("user_num", (String)request.getParameter("USER_NUM"));
+			user_data.put("user_name", (String)request.getParameter("USER_NAME"));
+			user_data.put("depart_num", (String)request.getParameter("DEPART_NUM"));
+			user_data.put("depart_name", (String)request.getParameter("DEPART_NAME"));
+		}
+		
+//		UserVO dataUser = new UserVO();
+//		{	
+//			dataUser.setUSER_NUM((String)request.getParameter("USER_NUM"));
+//			dataUser.setUSER_NAME((String)request.getParameter("USER_NAME"));
+//			dataUser.setDEPART_NUM((String)request.getParameter("DEPART_NUM"));
+//			dataUser.setDEPART_NAME((String)request.getParameter("DEPART_NAME"));
+//		}
+		
+		JqEvalResult jqEvalResult = new JqEvalResult();
+		
+		try {		
+			EvalVO paEvalVo = new EvalVO();		
+			paEvalVo.setUSER_NUM(user_num);
+			paEvalVo.setEVAL_WITH("1");
+			paEvalVo.setUPEVAL_WITH("1"); // 차상위평가 설정
+			 
+			EvalVO dataEval = evalService.getLastEvalData(paEvalVo);
+					
+			if(dataEval != null) {	
+				jqEvalResult.setResult(0);					
+				jqEvalResult.addEvalData(dataEval);
+				
+				List<EvalResultVO> listEvalResult  = evalService.getAllEvalResultData(dataEval);			
+				
+				if( listEvalResult.size() > 0 ) {
+					for(EvalResultVO evalResultVo : listEvalResult) {	
+						if(evalResultVo.getEVAL_TYPE().equals("0")) {
+							jqEvalResult.addEvalResultData(evalResultVo);
+						}
+						else if(evalResultVo.getEVAL_TYPE().equals("1")) {
+							jqEvalResult.addUpEvalResultData(evalResultVo);
+						}
+					} 				
+				}
+			}
+			else {
+				jqEvalResult.setResult(1);
+			}
+			
+		}
+		catch (IOException e) {
+			if(D) System.err.println("goUpEval.do IOException Occured1 : " + e.toString());
+			jqEvalResult.setResult(2);
+		}
+		catch (Exception e) {
+			if(D) System.err.println("goUpEval.do Exception Occured1 : " + e.toString());
+			jqEvalResult.setResult(2);
+		}	
+		
+		// 차상위평가 미진행 기간 정보 출력
+		try {
+			EvalVO paEvalVo = new EvalVO();		
+			paEvalVo.setUSER_NUM(user_num);
+			paEvalVo.setEVAL_WITH("1");
+			paEvalVo.setUPEVAL_WITH("0"); // 차상위평가 미진행 이력 
+			
+			List<EvalVO> listEval = evalService.getAllEvalData(paEvalVo);
+
+			List<String> periodFromTo = CommonUtil.getPeriodFromTo(listEval);		
+			mavUpEval.addObject("period", periodFromTo);		
+			mavUpEval.addObject("periodlen", periodFromTo.size());			
+		}
+		catch(IOException e) {
+			if(D) System.err.println("goUpEval.do IOException Occured2 : " + e.toString());
+		}
+		catch(Exception e) {
+			if(D) System.err.println("goUpEval.do Exception Occured2 : " + e.toString());
+		}
+		
+		// 등급정보 출력
+		try {
+			List<GradeItemVO> listGradeItem = evalService.getGradeItemData();	
+			
+			if(listGradeItem.size() > 0) {
+				mavUpEval.addObject("grade", listGradeItem);	
+			}
+		}
+		catch(IOException e) {
+			if(D) System.err.println("goUpEval.do IOException Occured3 : " + e.toString());
+		}
+		catch(Exception e) {
+			if(D) System.err.println("goUpEval.do Exception Occured3 : " + e.toString());
+		}
+				
+		//System.out.println("controller result : " + periodMonth);
+		
+		String jsonStr = jqEvalResult.getJsonString();
+		//System.out.println("jsonStr: " + jsonStr);
+		
+		mavUpEval.addObject("json_result", jsonStr);
+		mavUpEval.addObject("userdata", user_data);
+		
+		mavUpEval.setViewName("/retail/eval/upeval");
+		
+		return mavUpEval;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/goUpEvalProcess.do", method = RequestMethod.POST)
+	public ModelAndView goUpEvalProcess(HttpServletRequest request, HttpServletResponse response, ModelMap model)throws Exception 
+	{		
+		if(D) System.out.println("Start goUpEvalProcess.do");
+		
+		ModelAndView mavUpEvalProcess = new ModelAndView();
+		
+		String user_num		= request.getParameter("USER_NUM");		
+		String depart_num	= request.getParameter("DEPART_NUM");				
+		
+		// 평가기간 확인
+		String period_fromto	= request.getParameter("PERIOD_FROMTO");
+		String period_from	= period_fromto.substring(0,6);
+		String period_to		= period_fromto.substring(9);
+		
+		if(D) System.out.println("period_fromto: " + period_fromto);
+		if(D) System.out.println("period_from: " + period_from);
+		if(D) System.out.println("period_to: " + period_to);
+		
+		
+		// 선택한 사원정보 데이터 입력
+		JSONObject user_data = new JSONObject();
+		{
+			user_data.put("user_num", (String)request.getParameter("USER_NUM"));
+			user_data.put("user_name", (String)request.getParameter("USER_NAME"));
+			user_data.put("depart_num", (String)request.getParameter("DEPART_NUM"));
+			user_data.put("depart_name", (String)request.getParameter("DEPART_NAME"));
+		}
+
+		JqEvalResult jqEvalResult = new JqEvalResult();
+		
+		try {
+			EvalVO paEvalVo = new EvalVO();
+			paEvalVo.setUSER_NUM(user_num);
+			//paEvalVo.setUPUSER_NUM(CommonUtil.getEnv(request.getSession()).getUser_num());
+			//paEvalVo.setDEPART_NUM(depart_num);
+			paEvalVo.setPERIOD_FROM(period_from);
+			paEvalVo.setPERIOD_TO(period_to);
+			
+			EvalVO dataEval = evalService.getUserEvalData(paEvalVo);		
+			
+			if(dataEval != null) {	
+				jqEvalResult.setResult(0);
+				jqEvalResult.addEvalData(dataEval);
+				
+				List<EvalResultVO> listEvalResult  = evalService.getAllEvalResultData(dataEval);			
+				
+				if(listEvalResult.size() > 0) {					
+					for(EvalResultVO evalResultVo : listEvalResult) {						
+						if(evalResultVo.getEVAL_TYPE().equals("0")) {
+							jqEvalResult.addEvalResultData(evalResultVo);
+							
+							evalResultVo.setEVAL_TYPE("1");
+							evalResultVo.setEVAL_COMMENT("");						
+							jqEvalResult.addUpEvalResultData(evalResultVo);
+						}
+					}
+				}
+			}
+			else {
+				jqEvalResult.setResult(1);				
+			}
+		}
+		catch(IOException e) {
+			jqEvalResult.setResult(2);
+			if(D) System.err.println("goUpEvalProcess.do IOException Occured1 : " + e.toString());
+		}
+		catch(Exception e) {
+			jqEvalResult.setResult(2);
+			if(D) System.err.println("goUpEvalProcess.do Exception Occured1 : " + e.toString());
+		}
+		
+		// 등급정보 출력
+		try {
+			List<GradeItemVO> listGradeItem = evalService.getGradeItemData();	
+			
+			if(listGradeItem.size() > 0) {
+				mavUpEvalProcess.addObject("grade", listGradeItem);	
+			}
+		}
+		catch(IOException e) {
+			if(D) System.err.println("goUpEvalProcess.do IOException Occured2 : " + e.toString());
+		}		
+		catch(Exception e) {
+			if(D) System.err.println("goUpEvalProcess.do Exception Occured2 : " + e.toString());
+		}	
+		
+		String jsonStr = jqEvalResult.getJsonString();		
+		mavUpEvalProcess.addObject("json_result", jsonStr);	
+		mavUpEvalProcess.addObject("userdata", user_data);
+		mavUpEvalProcess.addObject("period_from", period_from);
+		mavUpEvalProcess.addObject("period_to", period_to);	
+		mavUpEvalProcess.setViewName("/retail/eval/upeval_process");
+		
+		return mavUpEvalProcess; 
+	}
+	
+	@RequestMapping(value = "/setUpEvalData.do", method = RequestMethod.POST)
+	public void setUpEvalData(HttpServletRequest request, HttpServletResponse response, ModelMap model)throws Exception 
+	{			
+		if(D) System.out.println("Start setUpEvalData.do");
+		
+		try {
+			String json_result = request.getParameter("json_result");				
+			json_result = json_result.replaceAll("&quot;", "\"");
+			
+			JSONParser parser =  new JSONParser();			
+			JSONObject mainObject = (JSONObject)parser.parse(json_result);			
+			JSONArray upevalResultArray = (JSONArray)mainObject.get("upeval_results_array");
+			
+			String eval_results_count = (String)mainObject.get("upeval_results_count");
+			int evalCount = Integer.parseInt(eval_results_count);			
+			
+			EvalVO dataEval = new EvalVO();
+			{
+				dataEval.setEVAL_INDEX((String)mainObject.get("eval_index"));
+				dataEval.setUSER_NUM((String)mainObject.get("user_num"));	
+				dataEval.setPERIOD_FROM((String)mainObject.get("period_from"));
+				dataEval.setPERIOD_TO((String)mainObject.get("period_to"));
+				dataEval.setUPEVAL_WITH("1");
+				dataEval.setUPUSER_NUM(CommonUtil.getEnv(request.getSession()).getUser_num());
+				dataEval.setUPUSER_NAME(CommonUtil.getEnv(request.getSession()).getUser_name());
+			}		
+
+			if(D) System.out.println("getUPEVAL_WITH: " + dataEval.getUPEVAL_WITH());
+				
+			List<EvalResultVO> listEvalResult = new ArrayList<EvalResultVO>();
+			
+			for(int i = 0 ; i < evalCount ; i++) {				
+				JSONObject jObj = (JSONObject)parser.parse(upevalResultArray.get(i).toString());	
+				EvalResultVO paEvalResultVo = new EvalResultVO();
+				{
+					paEvalResultVo.setEVAL_INDEX(dataEval.getEVAL_INDEX());
+					paEvalResultVo.setEVAL_ITEM_NUM((String)jObj.get("eval_item_num"));
+					paEvalResultVo.setEVAL_ITEM_NAME((String)jObj.get("eval_item_name"));
+					paEvalResultVo.setEVAL_RATE((String)jObj.get("eval_rate"));
+					paEvalResultVo.setGRADE_ITEM_NUM((String)jObj.get("grade_num"));
+					paEvalResultVo.setGRADE_ITEM_NAME((String)jObj.get("grade_name"));
+					paEvalResultVo.setEVAL_TYPE("1");
+					paEvalResultVo.setEVAL_COMMENT((String)jObj.get("eval_comment"));	
+				}					
+				listEvalResult.add(paEvalResultVo);				
+			}
+			
+			// update and insert part			
+			JqResult jqResult = new JqResult();
+			
+			int resultFlag = 0;
+			resultFlag = evalService.updateEvalData(dataEval);	
+			
+			if(resultFlag == 1) {
+				evalService.insertEvalResultData(listEvalResult);	
+				jqResult.setResult(0);
+			}
+			else {
+				jqResult.setResult(1);
+			}
+			
+			String jsonStr = jqResult.getJsonString(); 	
+			response.setContentType("text/json; charset=utf-8"); 
+			response.getWriter().print(jsonStr);
+			
+		} 
+		catch (IOException e) {
+			if(D) System.err.println("setUpEvalData.do IOException Occured : " + e.toString());
+		} 
+		catch (Exception e) {
+			if(D) System.err.println("setUpEvalData.do Exception Occured : " + e.toString());
+		}
+	}
+}

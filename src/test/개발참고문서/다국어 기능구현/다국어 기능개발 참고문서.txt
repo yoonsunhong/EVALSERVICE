@@ -1,0 +1,17 @@
+<다국어 개발을 위한  참고자료>
+
+1.다국어는 스프링 메세지를 이용
+2.다국어를 불러오기 위해 properties를 사용함.
+3.기본 은 한국어로 설정 되어 있으며, ko -> 한국어 / en -> 영어 , 추후 중국어, 일본어등 파일 추가 가능
+4.properties의 위치는 src/main/resources/egovframework/message/ 폴더에
+5.스프링 메세지를 위해 환경설정 xml은 dispatcher-servlet.xml파일에 셋팅되어 있으며, 본 소스는 SimpleUrlAnnotationHandlerMapping을 사용하여 구현
+6.개발의 편의를 위해 jsp와 js파일을 분리하였기 때문에 js파일에서 "스프링 메세지"를 사용 할 수 없음
+   때문에 다국어를 사용하기위해 언어변경을 위한 공통 include JSP을 생성 
+   inc_language.jsp파일에 자바스크립트 전역변수와 스프링 메세지를 맵핑해주는 스크립트 작성
+   마지막으로, properties파일에 다국어를 사용하기위해 변수(메세지)를 추가 했을경우에는 반드시!! inc_language.jsp파일의 스크립트에도 맵핑해주는 기능 추가해야함
+   본 파일은 개발 페이지에 관계없이 1번만 작성해주면 계속해서 사용 할 수 있음.
+   
+   스크립트 작성 예) 
+   jsp/retail/inc_common/inc_language.jsp 파일
+   //msgSaveConfirm변수에 담긴 메세지 : 저장하시겠습니까?
+   var msgSaveConfirm = '<spring:message code="msgSaveConfirm"/>'; 

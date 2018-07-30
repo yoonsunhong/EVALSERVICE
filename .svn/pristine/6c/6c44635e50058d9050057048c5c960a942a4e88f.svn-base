@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="eval">
+
+	<!-- 최신 평가이력 확인 -->
+	<select id="getLastEvalData" resultClass="retail.eval.service.EvalVO">   	
+		SELECT *
+		FROM 
+		(
+			SELECT 
+				EVAL_INDEX, 
+				USER_NUM,
+				USER_NAME,
+				DEPART_NUM,
+				DEPART_NAME,
+				PERIOD_FROM, 
+				PERIOD_TO, 
+				EVAL_WITH,
+				UPEVAL_WITH,
+				UPUSER_NUM,
+				UPUSER_NAME,		
+				LAG(EVAL_INDEX, 1, 0) OVER (ORDER BY EVAL_INDEX) AS EVAL_INDEX_PREV, 
+				LEAD(EVAL_INDEX, 1, 0) OVER (ORDER BY EVAL_INDEX) AS EVAL_INDEX_NEXT
+			FROM 
+			(
+				SELECT *
+				FROM EVALS
+				WHERE USER_NUM = #USER_NUM#
+				AND EVAL_WITH = #EVAL_WITH#				
+				<isNotEmpty property="UPEVAL_WITH">
+				AND UPEVAL_WITH = #UPEVAL_WITH#
+				</isNotEmpty>
+			)
+		)
+		WHERE EVAL_INDEX IN 
+		(
+			SELECT EVAL_INDEX
+			FROM 
+			(
+				SELECT *
+				FROM EVALS
+				WHERE USER_NUM = #USER_NUM#
+				AND EVAL_WITH = #EVAL_WITH#				
+				<isNotEmpty property="UPEVAL_WITH">
+				AND UPEVAL_WITH = #UPEVAL_WITH#
+				</isNotEmpty>
+				ORDER BY EVAL_INDEX DESC
+			)
+			WHERE ROWNUM = 1
+		)
+   	</select>
+   	
+	<!-- 평가이력 고유번호(EVAL_INDEX) 로 검색 -->
+	<select id="getEvalData" resultClass="retail.eval.service.EvalVO">   
+		SELECT *
+		FROM 
+		(
+		    SELECT 
+				EVAL_INDEX, 
+				USER_NUM,
+				USER_NAME,
+				DEPART_NUM,
+				DEPART_NAME,
+				PERIOD_FROM, 
+				PERIOD_TO, 
+				EVAL_WITH,
+				UPEVAL_WITH,
+				UPUSER_NUM,
+				UPUSER_NAME,		
+				LAG(EVAL_INDEX, 1, 0) OVER (ORDER BY EVAL_INDEX) AS EVAL_INDEX_PREV, 
+				LEAD(EVAL_INDEX, 1, 0) OVER (ORDER BY EVAL_INDEX) AS EVAL_INDEX_NEXT
+		    FROM 
+		    (
+		        SELECT *
+		        FROM EVALS
+		        WHERE USER_NUM = #USER_NUM#
+		        AND EVAL_WITH = #EVAL_WITH#
+				<isNotEmpty property="UPEVAL_WITH">
+		        AND UPEVAL_WITH = #UPEVAL_WITH#
+				</isNotEmpty>
+		    )
+		)
+		WHERE EVAL_INDEX = #EVAL_INDEX#
+   	</select>
+	
+	<!-- 사원번호로 모든 평가 이력 검색 -->
+	<select id="getAllEvalData" resultClass="retail.eval.service.EvalVO">   
+        SELECT *
+        FROM EVALS
+        WHERE USER_NUM = #USER_NUM#
+        AND EVAL_WITH = #EVAL_WITH#
+		<isNotEmpty property="UPEVAL_WITH">
+        AND UPEVAL_WITH = #UPEVAL_WITH#
+		</isNotEmpty>
+		ORDER BY EVAL_INDEX ASC
+   	</select>
+   	
+   	<!-- 사원정보 및 평가 기간이 일치하는 평가이력 검색 -->
+	<select id="getUserEvalData" resultClass="retail.eval.service.EvalVO">   
+        SELECT *
+        FROM EVALS
+        WHERE USER_NUM	= #USER_NUM#
+        AND DEPART_NUM	= #DEPART_NUM#
+        AND PERIOD_FROM	= #PERIOD_FROM#
+        AND PERIOD_TO 		= #PERIOD_TO#
+   	</select>   	
+   	
+   	<!-- 검색 기간 사이의 사원정보가 일치하는 평가이력 검색 -->
+	<select id="getAllUserEvalData" resultClass="retail.eval.service.EvalVO">   	
+		<![CDATA[
+	        SELECT *
+	        FROM EVALS
+	        WHERE USER_NUM	= #USER_NUM#
+	        AND PERIOD_FROM	<= #PERIOD_TO#
+	        AND PERIOD_TO 		>= #PERIOD_FROM#
+	        AND UPEVAL_WITH	= #UPEVAL_WITH#
+			ORDER BY EVAL_INDEX ASC
+		]]>
+   	</select>   	
+   	
+   	
+   	
+   	
+   	
+   	<!-- 평가이력 고유번호로 평가결과 데이터 전체 검색 -->
+   	<select id="getAllEvalResultData" resultClass="retail.eval.service.EvalResultVO">   	
+		<![CDATA[				
+			SELECT *
+			FROM EVAL_RESULTS
+			WHERE EVAL_INDEX = #EVAL_INDEX#
+		]]>
+   	</select>
+   	
+   	<!-- 평가이력 고유번호로  평가유형별 평가결과 데이터 검색 -->
+   	<select id="getEvalResultData" resultClass="retail.eval.service.EvalResultVO">   	
+		<![CDATA[				
+			SELECT *
+			FROM EVAL_RESULTS
+			WHERE EVAL_INDEX = #EVAL_INDEX#
+			AND EVAL_TYPE = #EVAL_TYPE#
+			ORDER BY EVAL_ITEM_NUM ASC
+		]]>
+   	</select>
+   	
+   	<!-- 사원별 평가항목비율 검색 -->
+   	<select id="getEvalRateData" parameterClass="retail.eval.service.EvalVO" resultClass="retail.eval.service.EvalResultVO">   	
+		<![CDATA[				
+			SELECT *
+			FROM EVAL_RATES
+			WHERE USER_NUM = #USER_NUM#
+			ORDER BY EVAL_ITEM_NUM ASC
+		]]>
+   	</select>
+   	
+   	
+   	
+   	
+   	
+   	<!-- 공통으로 사용되는 평가등급 검색 -->
+   	<select id="getGradeItemData" resultClass="retail.eval.service.GradeItemVO">   	
+		<![CDATA[				
+			SELECT *
+			FROM GRADE_ITEMS
+		]]>
+   	</select>
+   	
+   	<!-- 해당 평가 이력에서 사용한 평가 등급 정보를 추출 : 중복 제거 -->
+   	<select id="getUserGradeItemData" parameterClass="retail.eval.service.EvalVO" resultClass="retail.eval.service.GradeItemVO">   	
+		<![CDATA[				
+			SELECT DISTINCT 
+				R.GRADE_ITEM_NUM
+				,R.GRADE_ITEM_NAME
+			FROM 
+				EVALS E
+				,EVAL_RESULTS R
+			WHERE E.EVAL_INDEX	= R.EVAL_INDEX
+			AND E.USER_NUM			= #USER_NUM#
+			AND E.PERIOD_FROM		<= #PERIOD_TO#
+			AND E.PERIOD_TO 		>= #PERIOD_FROM#
+			AND E.UPEVAL_WITH		= #UPEVAL_WITH#
+			ORDER BY R.GRADE_ITEM_NUM ASC
+		]]>
+   	</select>	
+	
+   	<!-- 평가 이력 입력 -->
+	<insert id="insertEvalData"  parameterClass="retail.eval.service.EvalVO">		  	
+	 	INSERT INTO EVALS   
+		(  
+			EVAL_INDEX
+			,USER_NUM
+			,USER_NAME
+			,DEPART_NUM
+			,DEPART_NAME
+			,PERIOD_FROM 
+			,PERIOD_TO
+			,EVAL_WITH
+			,UPEVAL_WITH
+			,UPUSER_NUM
+			,UPUSER_NAME			        
+		) 
+		VALUES
+		(
+			TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMM'))||lpad(EVAL_SEQ.NEXTVAL,3,0)
+			,#USER_NUM#
+			,#USER_NAME#
+			,#DEPART_NUM#
+			,#DEPART_NAME#
+			,#PERIOD_FROM#
+			,#PERIOD_TO#
+			,#EVAL_WITH#
+			,#UPEVAL_WITH#
+			,#UPUSER_NUM#
+			,#UPUSER_NAME#
+		)	
+		
+		<selectKey resultClass="int">
+        	SELECT EVAL_INDEX
+        	FROM EVALS
+        	WHERE USER_NUM = #USER_NUM#
+        	AND USER_NAME = #USER_NAME#
+        	AND PERIOD_FROM = #PERIOD_FROM#
+        	AND PERIOD_TO = #PERIOD_TO#
+    	</selectKey>
+		
+	</insert>
+   	
+   	<!-- 
+   	<insert id="insertEvalData"  parameterClass="retail.eval.service.EvalVO">		
+	 	INSERT INTO EVALS   
+		(  
+			EVAL_INDEX
+			,USER_NUM
+			,USER_NAME
+			,DEPART_NUM
+			,DEPART_NAME
+			,PERIOD_FROM 
+			,PERIOD_TO
+			,EVAL_WITH
+			,UPEVAL_WITH
+			,UPUSER_NUM
+			,UPUSER_NAME			        
+		) 
+		VALUES
+		(
+			#EVAL_INDEX#
+			,#USER_NUM#
+			,#USER_NAME#
+			,#DEPART_NUM#
+			,#DEPART_NAME#
+			,#PERIOD_FROM#
+			,#PERIOD_TO#
+			,#EVAL_WITH#
+			,#UPEVAL_WITH#
+			,#UPUSER_NUM#
+			,#UPUSER_NAME#
+		)		
+	</insert> -->
+	
+	<!-- 평가결과 다중 입력 -->
+   	<insert id="insertEvalResultData"  parameterClass="java.util.List">
+   		INSERT ALL
+        <dynamic>
+			<iterate conjunction=" "  >
+				INTO EVAL_RESULTS
+				(
+					EVAL_INDEX
+					,EVAL_ITEM_NUM
+					,EVAL_ITEM_NAME
+					,EVAL_RATE
+					,GRADE_ITEM_NUM
+					,GRADE_ITEM_NAME
+					,EVAL_TYPE
+					,EVAL_COMMENT
+				) 
+				VALUES
+				(
+					#[].EVAL_INDEX#
+					,#[].EVAL_ITEM_NUM#
+					,#[].EVAL_ITEM_NAME#
+					,#[].EVAL_RATE#
+					,#[].GRADE_ITEM_NUM#
+					,#[].GRADE_ITEM_NAME#
+					,#[].EVAL_TYPE#
+					,#[].EVAL_COMMENT#
+				)
+			</iterate>
+		</dynamic>
+		SELECT * FROM dual   	
+	</insert>
+	
+   	
+   	<!-- 평가이력 업데이트 -->
+	<update id="updateEvalData"  parameterClass="retail.eval.service.EvalVO">	
+		UPDATE EVALS
+		SET
+			UPEVAL_WITH				= #UPEVAL_WITH#
+			,UPUSER_NUM				= #UPUSER_NUM#
+			,UPUSER_NAME			= #UPUSER_NAME#
+		WHERE EVAL_INDEX			= #EVAL_INDEX#
+		AND USER_NUM				= #USER_NUM#
+		AND PERIOD_FROM			= #PERIOD_FROM#	
+		AND PERIOD_TO				= #PERIOD_TO# 
+	</update>
+	
+	
+	<!-- 평가결과 항목 1개 업데이트 -->
+	<update id="updateEvalResultData"  parameterClass="retail.eval.service.EvalResultVO">	
+		UPDATE EVAL_RESULTS
+		SET
+			GRADE_ITEM_NUM		= #GRADE_ITEM_NUM#
+			,GRADE_ITEM_NAME		= #GRADE_ITEM_NAME#
+			,EVAL_COMMENT			= #EVAL_COMMENT#
+		WHERE EVAL_INDEX			= #EVAL_INDEX#
+		AND EVAL_ITEM_NUM		= #EVAL_ITEM_NUM#
+		AND EVAL_ITEM_NAME		= #EVAL_ITEM_NAME#	
+		AND EVAL_TYPE				= #EVAL_TYPE# 
+	</update>
+
+</sqlMap>

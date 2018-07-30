@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="login">
+
+
+	<!-- 로그인 -->    
+    <select id="login" resultClass="retail.login.service.LoginVO" >
+        <![CDATA[
+			SELECT 
+           		U1.USER_NUM
+           		,U1.USER_NAME
+           		,U1.USER_PASS
+           		,U1.USER_DATE
+           		,D1.DEPART_NUM
+           		,D1.DEPART_NAME
+           		,U1.UPUSER_NUM
+           		,U1.UPUSER_NAME
+			FROM 
+				USERS U1
+				,DEPARTS D1
+			WHERE U1.USER_NAME = #USER_NAME#
+			AND U1.USER_PASS = #USER_PASS#
+			AND U1.DEPART_NUM = D1.DEPART_NUM
+			ORDER BY U1.DEPART_NUM
+        ]]>
+    </select>
+    
+    <!-- 로그인 체크 -->   
+    <select id="checkuser" resultClass="retail.login.service.LoginVO" >
+        <![CDATA[
+			SELECT 
+				U1.USER_NUM
+				,U1.USER_NAME
+				,U1.USER_PASS
+				,U1.USER_DATE
+				,D1.DEPART_NUM
+				,D1.DEPART_NAME
+				,U1.UPUSER_NUM
+				,U1.UPUSER_NAME
+			FROM 
+				USERS U1
+				,DEPARTS D1
+			WHERE U1.USER_NAME = #USER_NAME#
+			AND U1.DEPART_NUM = D1.DEPART_NUM
+			ORDER BY U1.DEPART_NUM
+        ]]>
+    </select>
+    
+    <!-- 전체 사원명, 사원번호 검색 -->
+    <select id="getAllUserName" resultClass="retail.login.service.LoginVO" >
+    	SELECT USER_NAME
+		FROM USERS
+		ORDER BY USER_NAME ASC
+    </select>
+    
+    <!-- 전체 부서정보 검색 -->
+    <select id="getAllDepart" resultClass="retail.login.service.LoginVO" >
+    	SELECT *
+		FROM DEPARTS
+		ORDER BY DEPART_NUM ASC
+    </select>
+    
+    <!-- 부서정보가 일치하는 모든 사원정보를 검색 -->
+    <select id="getDepartUser" resultClass="retail.login.service.LoginVO" >
+    	SELECT 
+    		USER_NUM
+    		,USER_NAME
+		FROM USERS
+		WHERE DEPART_NUM = #DEPART_NUM#
+		ORDER BY USER_NAME ASC
+    </select>
+
+</sqlMap>
+
+<!-- SELECT 
+            T1.USER_NAME
+          , T1.USER_PASS  
+          FROM  USERS T1 
+          WHERE USER_NAME = #USER_NAME#
+          AND USER_PASS = #USER_PASS# -->

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="Main">
+
+    <!-- 하위사원정보 검색 -->
+    <select id="getUnderUser" resultClass="retail.main.service.UserVO" >
+       SELECT
+			U1.USER_NUM
+			,U1.USER_NAME
+			,D1.DEPART_NUM
+			,D1.DEPART_NAME
+			,U1.UPUSER_NUM
+			,U1.UPUSER_NAME
+		FROM 
+			USERS U1
+			,DEPARTS D1			
+		WHERE U1.UPUSER_NUM = #USER_NUM#
+		AND U1.DEPART_NUM = D1.DEPART_NUM
+		ORDER BY U1.DEPART_NUM
+    </select>
+
+</sqlMap>

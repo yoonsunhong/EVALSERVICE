@@ -1,0 +1,27 @@
+@charset "utf-8";
+/* CSS Document before
+.pop-layer {display:none; position: absolute; top: 50%; left: 50%; width: 410px; height:auto;  background-color:#fff; border: 5px solid #3571B5; z-index: 10;}	
+.pop-layer .pop-container {padding: 20px 25px;}
+.pop-layer p.ctxt {color: #666; line-height: 25px;}
+.pop-layer .btn-r {width: 100%; margin:10px 0 20px; padding-top: 10px; border-top: 1px solid #DDD; text-align:right;}
+
+a.cbtn {display:inline-block; height:25px; padding:0 14px 0; border:1px solid #304a8a; background-color:#3f5a9d; font-size:13px; color:#fff; line-height:25px;}	
+a.cbtn:hover {border: 1px solid #091940; background-color:#1f326a; color:#fff;}		
+
+a.obtn {display:inline-block; height:25px; padding:0 14px 0; border:1px solid #4f1715; background-color:#b22520; font-size:13px; color:#fff; line-height:25px;}	
+a.obtn:hover {border: 1px solid #190303; background-color:#491818; color:#fff;}*/
+
+
+/* CSS Document */
+.pop-layer {display:none; position: absolute; top: 50%; left: 50%; width: 80vw; height:auto;  background-color:#fff; border: 5px solid #3571B5; z-index: 10;}	
+.pop-layer .pop-container {padding: 1vh 2vw;}
+.pop-layer p.ctxt {color: #666; line-height: 25px;}
+.pop-layer .btn-r {width: 100%; margin-top:1vh; margin-bottom:1vh; padding-top: 1.5vh; border-top: 1px solid #DDD; text-align:right;}
+
+a.cbtn {display:inline-block; height:4vh; padding:0 14px 0; border:1px solid #304a8a; background-color:#3f5a9d; font-size:2.5vh; color:#fff; line-height:25px;}	
+a.cbtn:hover {border: 1px solid #091940; background-color:#1f326a; color:#fff;}		
+
+a.obtn {display:inline-block; height:4vh; padding:0 14px 0; border:1px solid #4f1715; background-color:#b22520; font-size:2.5vh; color:#fff; line-height:25px;}	
+a.obtn:hover {border: 1px solid #190303; background-color:#491818; color:#fff;}
+
+	

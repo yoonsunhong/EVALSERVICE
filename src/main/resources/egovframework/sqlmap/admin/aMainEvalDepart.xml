@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="aMainEvalDepart">
+
+	<select id="selectCountCode" resultClass="retail.admin.service.AMainEvalDepartVO" parameterClass="retail.admin.service.AMainEvalDepartVO" >
+		SELECT   COUNT(*)  AS CNT
+		FROM   DEPART
+		WHERE  DEPART_NUM   = #DEPART_NUM# 
+	</select>
+   
+	<select id="getEvalDepart" resultClass="retail.admin.service.AMainEvalDepartVO" parameterClass="retail.admin.service.AMainEvalDepartVO" >
+		SELECT
+			 DEPART_NUM
+			,DEPART_NAME
+			,USE_YN
+		FROM		DEPARTS
+		WHERE	1=1
+		<isNotEmpty property="DEPART_NAME">
+			AND	DEPART_NAME   LIKE   '%'|| #DEPART_NAME# || '%'
+		</isNotEmpty>
+		<isNotEmpty property="USE_YN">
+			AND	USE_YN = #USE_YN#
+		</isNotEmpty>
+		ORDER BY DEPART_NUM
+	</select>
+		
+	<select id="getEvalItem" resultClass="retail.admin.service.AMainEvalDepartVO" parameterClass="retail.admin.service.AMainEvalDepartVO" >
+		SELECT
+			 DEPART_NUM
+			,EVAL_ITEM_NUM
+			,EVAL_ITEM_NAME
+			,EVAL_RATE
+		FROM EVAL_ITEM  
+		WHERE	USE_YN = 'Y'
+			AND	DEPART_NUM = #DEPART_NUM# 
+		ORDER BY EVAL_ITEM_NUM
+	</select>		
+		
+	<update id="updateEvalRateDepart"  parameterClass="retail.admin.service.AMainEvalDepartVO">
+		UPDATE EVAL_ITEM
+		SET
+			EVAL_RATE = #EVAL_RATE#
+		WHERE	EVAL_ITEM_NUM = #EVAL_ITEM_NUM#
+			AND	DEPART_NUM = #DEPART_NUM#
+	</update>   
+		
+	<update id="updateEvalRateDepartUser"  parameterClass="retail.admin.service.AMainEvalDepartVO">
+		UPDATE
+		(	
+			SELECT E.*
+			FROM 
+				 USERS U
+				,EVAL_RATES E
+			WHERE	U.USER_NUM = E.USER_NUM
+				AND	U.DEPART_NUM = #DEPART_NUM#
+				AND	E.EVAL_ITEM_NUM = #EVAL_ITEM_NUM#
+		)
+		SET EVAL_RATE = #EVAL_RATE#
+	</update> 
+		
+	<select id="getEvalItemDepartUser" resultClass="retail.admin.service.AMainEvalDepartVO" parameterClass="retail.admin.service.AMainEvalDepartVO" >
+		SELECT
+			 A.USER_NUM
+			,B.USER_NAME
+			,A.EVAL_ITEM_NAME
+			,A.EVAL_RATE
+		FROM
+			 EVAL_RATES A 
+			,USERS B
+		WHERE	A.USER_NUM = B.USER_NUM
+			AND	A.USE_YN = 'Y'
+			AND	A.EVAL_ITEM_NUM = #EVAL_ITEM_NUM#
+			AND	A.USER_NUM IN 
+					(	
+						SELECT USER_NUM
+						FROM USERS
+						WHERE DEPART_NUM = #DEPART_NUM#
+					)
+	</select>			
+     
+
+</sqlMap>

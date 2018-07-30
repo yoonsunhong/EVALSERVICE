@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="aMainDept">
+  
+  	<!-- 신규 부서코드 조회 -->
+  	<select id="selectDeptNum" parameterClass="retail.admin.service.AMainDeptVO" resultClass="String" >
+			SELECT	NVL(MAX(DEPART_NUM) + 1, 100) AS DEPART_NUM
+			  FROM	DEPARTS
+  	</select>
+  	<!-- MAX(DEPART_NUM) AS DEPART_NUM -->
+  	
+  	<!-- 부서 조회 -->
+	<select id="aMainDeptList" parameterClass="retail.admin.service.AMainDeptVO" resultClass="retail.admin.service.AMainDeptVO">
+			SELECT	A.DEPART_NUM
+					 ,	A.DEPART_NAME
+					 ,	A.USE_YN
+					 ,	(	
+					 		SELECT	COUNT(*)
+							  FROM	USERS
+							 WHERE	DEPART_NUM = A.DEPART_NUM
+						) USE_COUNT
+			  FROM	DEPARTS A
+			 WHERE	1=1
+			<isNotEmpty property="USE_YN">
+				AND	USE_YN = #USE_YN#
+			</isNotEmpty>
+			 ORDER	BY DEPART_NUM
+	</select>
+	
+	<!-- 부서 추가 -->
+	<!--  
+			<selectKey keyProperty="DEPART_NUM" resultClass="String">
+			SELECT	MAX(DEPART_NUM) + 1 AS DEPART_NUM 
+			  FROM	DEPARTS 
+		    </selectKey>  -->
+	<insert id="saveDept" parameterClass="retail.admin.service.AMainDeptVO">
+			INSERT	INTO DEPARTS
+			(
+						DEPART_NUM
+					 ,	DEPART_NAME
+					 ,	USE_YN
+			)
+			VALUES
+			(
+						#DEPART_NUM#
+					 ,	#DEPART_NAME#
+					 ,	#USE_YN#
+			)
+	</insert>
+	
+	<!-- 부서 수정 -->
+	<update id="updateDept" parameterClass="retail.admin.service.AMainDeptVO">
+			UPDATE	DEPARTS
+				 SET	DEPART_NAME = #DEPART_NAME#
+			  		 ,	USE_YN = #USE_YN#
+			 WHERE	DEPART_NUM = #DEPART_NUM# 
+	</update>
+	
+	<!-- 부서 삭제 -->
+	<update id="deleteDept" parameterClass="retail.admin.service.AMainDeptVO">
+			DELETE	
+			  FROM	DEPARTS
+			 WHERE	DEPART_NUM = #DEPART_NUM#
+    </update>
+	
+	<!-- 부서 사원목록 조회 -->
+	<select id="aMainDeptInUserListList" parameterClass="retail.admin.service.AMainDeptVO" resultClass="retail.admin.service.AMainDeptVO">
+			SELECT	USER_NUM
+					 ,	USER_NAME
+					 ,	UPUSER_NAME
+			  FROM	USERS
+			 WHERE	DEPART_NUM = #DEPART_NUM#
+	</select>
+	
+	<!-- 부서없는 사원목록 조회 -->
+	<select id="aMainDeptOutUserListList" parameterClass="retail.admin.service.AMainDeptVO" resultClass="retail.admin.service.AMainDeptVO">
+			SELECT	USER_NUM
+					 ,	USER_NAME
+					 ,	UPUSER_NAME
+			  FROM	USERS
+			 WHERE	DEPART_NUM is null
+	</select>
+	
+	<!-- 부서 사원목록 저장 -->
+	<update id="saveDeptUser" parameterClass="retail.admin.service.AMainDeptVO">
+			UPDATE	USERS 
+				 SET	DEPART_NUM = #DEPART_NUM#
+			 WHERE	USER_NUM = #USER_NUM#
+	</update>
+	
+    <!-- 부서 사원목록 삭제 --> 
+    <update id="deleteDeptUser" parameterClass="retail.admin.service.AMainDeptVO">
+	    	UPDATE	USERS 
+				 SET	DEPART_NUM = NULL
+			 WHERE	DEPART_NUM = #DEPART_NUM#
+    </update>
+    
+    
+	<!-- 추가한 부서의 평가기준정보 설정 - 평가기준값을 복사하여 추가 -->
+	<insert id="insertDeptEvalItem"  parameterClass="retail.admin.service.AMainDeptVO">
+		    INSERT	INTO EVAL_ITEM   
+		    (		
+						EVAL_ITEM_NUM
+					 ,	DEPART_NUM
+					 ,	EVAL_ITEM_NAME
+					 ,	EVAL_RATE
+					 ,	USE_YN 
+		    ) 
+		    SELECT	EVAL_ITEM_NUM
+     				 ,	#DEPART_NUM#
+					 ,	EVAL_ITEM_NAME
+					 ,	EVAL_RATE
+					 ,	USE_YN
+			  FROM	EVAL_ITEM
+			 WHERE	DEPART_NUM = #UPUSER_NUM#
+	</insert>
+	
+	<!-- 삭제하는 부서의 평가기준 삭제 -->			
+	<delete id="deleteDeptEvalItem"  parameterClass="retail.admin.service.AMainDeptVO">
+			DELETE	FROM EVAL_ITEM 
+			 WHERE	DEPART_NUM = #DEPART_NUM# 
+	</delete>
+    
+</sqlMap>

@@ -1,0 +1,246 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ page import="retail.common.BaseEnv"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page import ="retail.login.service.LoginVO" %>
+
+<jsp:include page="/WEB-INF/jsp/retail/inc_common/inc_head.jsp" /> 
+ 
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densityDpi=medium-dpi" />
+	<title>업무평가 앱 - 로그인</title>
+	<link type="text/css" rel="stylesheet" href="/resources/css/common.css">
+	<script type="text/javascript" src="/resources/js/jquery.cookie.js" charset="utf-8"></script>    
+	<script type="text/javascript">
+	
+		$(function(){
+		    //쿠키값이 존재하면
+		    var USER_NAME = $.cookie('USER_NAME');
+		    var USER_PASS = $.cookie('USER_PASS');
+		    
+		    if(USER_NAME != undefined && USER_PASS != undefined ) {
+		        //$("#USER_NAME").val(USER_NAME);
+		        $("#USER_NAME").val(USER_NAME).prop("selected", true);
+		        $("#USER_PASS").val(USER_PASS);
+		    }
+		    
+		    var regist_name = '${name}';
+		    var regist_pass = '${pass}';
+		    
+		    if((regist_name != "-") && (regist_pass != "-")) {
+		        //$("#USER_NAME").val(regist_name);
+		        $("#USER_NAME").val(regist_name).prop("selected", true);
+		        $("#USER_PASS").val(regist_pass);
+		    }
+		})
+
+			
+		//IE9 버전을 체크하여, 9버전일경우 새로고침
+		function getInternetExplorerVersion() {    
+	         var rv = -1; // Return value assumes failure.    
+	         if (navigator.appName == 'Microsoft Internet Explorer') {        
+	              var ua = navigator.userAgent;        
+	              var re = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");        
+	              if (re.exec(ua) != null)            
+	                  rv = parseFloat(RegExp.$1);    
+	             }    
+	         return rv; 
+	    }
+		
+		if(getInternetExplorerVersion() == 9) {
+			 var loc = location.search.split("=");
+			if(!(loc[0].substring(1) && loc[1] == 'yes')){
+				document.write("<meta id='refresh' http-equiv='refresh' content='0.1; URL=goLogin.do?loop=yes'>");  
+			} 
+		}
+		
+		// login.do
+		
+		//로그인 요청 시작
+		function login(){
+			   
+			if( $("#USER_NAME").val()  == "" )
+			{
+				alert("사원명을 입력하세요.");
+				 $("#USER_NAME").focus();
+				return;
+			}
+			if( $("#USER_PASS").val()  == "" )
+			{
+				alert("암호를 입력하세요.");
+				 $("#USER_PASS").focus();
+				return;
+			}
+			
+			<!--로그인 정보 확인-->
+			var form = document.getElementById("form1");
+			$.ajax({
+				url:"/login.do" ,
+				type:"POST",
+				datatype:"json",
+				data:{ user_name: $("#USER_NAME").val()   ,  user_pass :$("#USER_PASS").val() },
+				beforeSend : function(xhr) {} ,
+				success:function(data,textStatus){  
+					if(data.result != "0" ) { 
+						if(data.result == "1") {
+							alert("일치하는 사원정보가 없습니다.\n사원명, 비밀번호를 확인하세요.");
+							//location.replace("/"); 
+						}
+						else if(data.result == "2") {
+							alert("비밀번호 미등록 상태입니다.\n비밀번호 등록 화면으로 이동합니다.");
+							//location.replace("/regist.do");
+							form.submit(); 
+						}
+						else if(data.result == "3") {
+							alert("비밀번호가 일치하지 않습니다.\n비밀번호를 확인하세요.");
+							//location.replace("/"); 
+						}
+						else {
+							alert("로그인 오류!\n관리자에게 문의하세요.");
+							//location.replace("/"); 
+						}						
+					} else {
+						// 쿠키 저장
+						$.cookie('USER_NAME', $("#USER_NAME").val());
+		                $.cookie('USER_PASS', $("#USER_PASS").val());
+						
+						location.replace("/goMain.do"); 
+					} 
+				},
+				error:function(x,e){
+				}	 
+			}); 
+		}
+		
+		//엔터입력시 로그인 요청 
+		function search_check(){
+			login();
+		}
+		
+		//팝업을 위한 쿠키 (추후 사용)
+		function getCookie(cname) 
+		{   
+			var name = cname + "=";
+		    var ca = document.cookie.split(';');
+		    for(var i=0; i<ca.length; i++) {
+		        var c = ca[i];
+		        while (c.charAt(0)==' ') c = c.substring(1);
+		        if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+		    } 
+		    return "";
+		}
+		
+		<%
+		 /*			
+		<td>
+			<input type="hidden" name="USER_NAMES" id="USER_NAMES" value=""/> 
+			<select class="select1" name="USER_NAME" id="USER_NAME">
+				<c:forEach items="${users}" var="user">									
+					<option value="${user.getUSER_NAME()}"
+						<c:if test="${user.getUSER_NAME() == name}">
+							selected="selected"
+						</c:if>									
+					>${user.getUSER_NAME()}</option> 									
+				</c:forEach>
+			</select>
+		</td>
+		
+		
+			<td><input type="text" name="USER_NAME" id = "USER_NAME"  maxlength="15" value=""></td>
+			*/
+			
+		/*
+		<table>
+			<colgroup>
+				<col width="20px">
+				<col width="140px">
+				<col width="160px">
+				<col width="93px">
+			</colgroup>
+			<form name="form1" id="form1" action="/goRegist.do" method="post" > 
+				<tbody>
+					<tr>
+						<th><img src="/resources/img/ruckus/id.gif" width="20" height="24" alt="사원명  "></th>
+						<td><label for="">사원명</label></td>
+						<td><input type="text" name="USER_NAME" id = "USER_NAME"   maxlength="15" value=""></td>							
+					</tr>
+					<tr>
+						<th><img src="/resources/img/ruckus/pwd.gif" width="20" height="24" alt="비밀번호 "></th>
+						<td><label for="">비밀번호</label></td>
+						<td><input type="password" name="USER_PASS" id="USER_PASS" maxlength="15" 
+										onKeyDown="javascript:if (event.keyCode == 13) search_check();" value=""></td>
+					</tr>
+				</tbody>	
+			</form>	
+		</table>			
+
+		<form name="form1" id="form1" action="/goRegist.do" method="post" > 
+				<p><img src="/resources/img/ruckus/id.gif" width="20" height="24" alt="사원명  "><label for="">사원명</label></p>
+				<p><input type="text" name="USER_NAME" id = "USER_NAME"   maxlength="15" value=""></p>
+				<p><img src="/resources/img/ruckus/pwd.gif" width="20" height="24" alt="비밀번호 "><label for="">비밀번호</label></p>
+				<p><input type="password" name="USER_PASS" id="USER_PASS" maxlength="15" 
+										onKeyDown="javascript:if (event.keyCode == 13) search_check();" value=""></p>
+		</form>	
+		*/
+		%>
+	
+	</script>
+</head>
+
+ <body class="eval_login">
+ 	<div>
+		<!-- ========== header ========== -->
+		<div class="div_center">
+			<h1 class="login_title"><img src="/resources/img/login/logo.png" alt="리테일테크 업무평가"></h1>		
+		</div>
+		<!-- ========== //header ========== -->
+	
+		<!-- ========== content ========== -->
+		<section>	
+			<div class="div_center">			
+				<table class="table_center">
+					<form name="form1" id="form1" action="/goRegist.do" method="post" > 
+						<tbody>
+							<tr>
+								<td><!-- <span class="lable">[사원명]</span> --></td>				
+							</tr>		
+							
+							<tr class="login_user">
+								<td>	
+									<label for=""></label>
+									<select class="select1" name="USER_NAME" id="USER_NAME">
+										<c:forEach items="${users}" var="user">									
+											<option value="${user.getUSER_NAME()}">${user.getUSER_NAME()}</option> 									
+										</c:forEach>
+									</select>
+								</td>
+							</tr>
+							
+							<tr>
+								<td><!-- <span class="lable">[비밀번호]</span> --></td>						
+							</tr>								
+							<tr class="login_pw">
+								<td>
+									<input type="password" name="USER_PASS" id="USER_PASS" placeholder="비밀번호" maxlength="15" onKeyDown="javascript:if (event.keyCode == 13) search_check();" value="pass01"></td>
+							</tr>
+						</tbody>	
+					</form>	
+				</table>	
+			</div>
+			
+			<article>
+				<input class="button1 btn_stl1" type="button" onClick="login();" value="로그인" />	
+			</article>
+		</section>
+		<!-- ========== //content ========== -->
+	
+		<!-- ========== footer ==========  -->
+		<footer>
+			<img src="/resources/img/login/com_logo.png" alt="리테일테크">
+		</footer>
+		<!-- ========== //footer ========== -->
+	</div>
+ </body>
+</html>

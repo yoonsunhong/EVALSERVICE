@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="aMainEvalUser">
+
+	<select id="selectCountCode" resultClass="retail.admin.service.AMainEvalUserVO" parameterClass="retail.admin.service.AMainEvalUserVO" >
+			SELECT	COUNT(*) AS CNT
+			  FROM	USERS
+			WHERE	USER_NUM = #USER_NUM# 
+	</select>
+  
+	<select id="getEvalUser" resultClass="retail.admin.service.AMainEvalUserVO" parameterClass="retail.admin.service.AMainEvalUserVO" >
+	 		SELECT	USER_NUM
+	 		         ,	USER_NAME
+	 		         ,	USE_YN
+			  FROM	USERS
+			 WHERE	1=1
+                 <isNotEmpty property="USER_NAME">
+                  AND  USER_NAME   LIKE   '%'|| #USER_NAME# || '%'
+                 </isNotEmpty>
+                 <isNotEmpty property="USE_YN">
+                  AND  USE_YN  =      #USE_YN#
+	          </isNotEmpty>
+	         ORDER BY USER_NUM
+	</select>
+	
+	<select id="getEvalItemUser" resultClass="retail.admin.service.AMainEvalUserVO" parameterClass="retail.admin.service.AMainEvalUserVO" >
+			SELECT A.USER_NUM
+			     , A.EVAL_ITEM_NUM
+			     , A.EVAL_ITEM_NAME
+			     , A.EVAL_RATE
+			  FROM EVAL_RATES A
+			 WHERE A.USE_YN = 'Y'
+			   AND A.USER_NUM = #USER_NUM#
+			   ORDER BY A.EVAL_ITEM_NUM
+	</select>		
+	
+ 		<update id="updateEvalRateUser"  parameterClass="retail.admin.service.AMainEvalUserVO">
+			UPDATE EVAL_RATES
+			     SET EVAL_RATE = #EVAL_RATE#
+			 WHERE EVAL_ITEM_NUM = #EVAL_ITEM_NUM#
+			     AND USER_NUM = #USER_NUM#
+	</update>  
+	
+	<update id="insertEvalUser"  parameterClass="retail.admin.service.AMainEvalUserVO">
+ 		
+		INSERT INTO EVAL_RATES	
+		SELECT	
+			#USER_NUM# AS USER_NUM
+			,A.EVAL_ITEM_NUM
+			,B.EVAL_ITEM_NAME
+			,B.EVAL_RATE
+			,'Y' AS USE_YN
+		FROM	(SELECT EVAL_ITEM_NUM
+			          FROM EVAL_ITEM
+			         MINUS
+			        SELECT EVAL_ITEM_NUM
+			          FROM EVAL_RATES
+			         WHERE USER_NUM = #USER_NUM# ) A
+			      , EVAL_ITEM B
+			  WHERE A.EVAL_ITEM_NUM = B.EVAL_ITEM_NUM 
+	</update>  
+	
+	<delete id="deleteEvalItemUser"  parameterClass="retail.admin.service.AMainEvalUserVO">
+	
+	 DELETE  FROM EVAL_RATES 
+	  WHERE  USER_NUM 	    = #USER_NUM#
+	    AND   EVAL_ITEM_NUM 	= #EVAL_ITEM_NUM#
+	 
+	</delete>
+     
+
+</sqlMap>

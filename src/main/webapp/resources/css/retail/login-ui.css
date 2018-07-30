@@ -1,0 +1,13 @@
+@CHARSET "UTF-8";
+
+.div_center { display:inline-block; } 		
+header .login_title { font-size: 8vh; } 		
+header .title { font-size: 5vh; text-align: left; margin-left:2vw; } 		
+section .table_center{ text-align: left; } 	 	 		
+table .lable { font-size:4vh;  text-align:left; } 		
+table input[type="text"]{ width:60vw; height:5vh;  font-size:3vh; } 		
+table input[type="password"]{ width:60vw; height:5vh; font-size:3vh; } 		
+.select1{ width:60vw; height:5vh; font-size:3vh; } 
+.button1{ margin-top: 2vh; width:60vw; height:6vh; font-size:3vh; }
+.button2{ margin-top: 2vh; width:29.5vw; height:6vh; font-size:3vh; }	
+footer .version { font-size: 2vh; }

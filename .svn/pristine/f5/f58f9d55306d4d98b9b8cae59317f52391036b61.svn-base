@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMapConfig PUBLIC "-//iBATIS.com//DTD SQL Map Config 2.0//EN" "http://www.ibatis.com/dtd/sql-map-config-2.dtd">
+
+
+<sqlMapConfig>
+  <settings useStatementNamespaces="true"   />  
+
+	<!-- 메인 -->
+	<sqlMap resource="egovframework/sqlmap/login/login.xml" />
+	<sqlMap resource="egovframework/sqlmap/regist/regist.xml" />
+    <sqlMap resource="egovframework/sqlmap/main/main.xml" />
+	<sqlMap resource="egovframework/sqlmap/eval/eval.xml" />
+	<sqlMap resource="egovframework/sqlmap/graph/graph.xml" />
+    
+</sqlMapConfig>

@@ -1,0 +1,71 @@
+package retail.common;
+
+import retail.eval.service.EvalResultVO;
+import retail.eval.service.GradeItemVO;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+public class JqGraphResult {
+
+	
+	private int result;		
+	
+	private JSONObject mainObject;
+	private JSONArray	gradeArray;
+	private JSONArray	evalRateArray;
+		
+	public JqGraphResult() {
+		result = 0;
+		
+		mainObject = new JSONObject();
+		gradeArray = new JSONArray();
+		evalRateArray = new JSONArray();
+	}
+	
+	public void setResult(int result) {
+		this.result = result;		
+	}
+	
+	public void addGrade(GradeItemVO gradeItemVo) {	
+		JSONObject grade = new JSONObject();
+		
+		grade.put("num", gradeItemVo.getGRADE_ITEM_NUM());
+		grade.put("name", gradeItemVo.getGRADE_ITEM_NAME());
+		
+		gradeArray.add(grade);
+	}
+	
+	public void addEvalRate(EvalResultVO evalRateVo) {	
+		JSONObject evalRate = new JSONObject();
+		
+		evalRate.put("num", evalRateVo.getEVAL_ITEM_NUM());
+		evalRate.put("name", evalRateVo.getEVAL_ITEM_NAME());
+		evalRate.put("rate", evalRateVo.getEVAL_RATE());
+		
+		String name = evalRateVo.getEVAL_ITEM_NAME();
+		String abname = "";
+		String[] nArray;
+		
+		nArray = name.split(" ");
+		
+		for(int i = 0 ; i < nArray.length ; i++) {
+			abname += nArray[i].substring(0, 1);
+		}
+		
+		evalRate.put("abname", abname);
+		
+		evalRateArray.add(evalRate);
+	}
+	
+	public JSONObject getJsonObject() {		
+		
+		mainObject = new JSONObject();		
+		mainObject.put("result", result);
+		mainObject.put("gradedata", gradeArray);			
+		mainObject.put("ratedata", evalRateArray);			
+		
+		return mainObject;
+	}
+	
+	
+}

@@ -1,0 +1,123 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ page import="retail.common.BaseEnv"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@include file="/WEB-INF/jsp/retail/inc_common/inc_common.jsp" %>
+<%@page import ="retail.main.service.UserVO" %>
+
+<jsp:include page="/WEB-INF/jsp/retail/inc_common/inc_head.jsp" /> 
+ 
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densityDpi=medium-dpi" />
+	<title>업무평가 앱 - 하위사원 선택</title>
+	<link type="text/css" rel="stylesheet" href="/resources/css/common.css">
+
+	<script type="text/javascript">	
+		
+		function goMain() {
+			window.location = "/goMain.do";
+		}
+		
+		function SelectUser(index) {			
+			var form = document.getElementById("userform"+index);	
+			<!--alert(form.USER_NAME.value); -->
+			
+			form.submit();
+		}
+		
+	</script>	
+</head>
+
+	
+	
+ <body>
+	<!-- ========== header ========== -->		
+	<header>
+		<div class="tit_cnt">
+			<span class="menu"><img src="/resources/img/icon/ico_menu.png" alt="메뉴 아이콘"></span>
+			<h2 class="title">차상위평가</h2>		
+		</div>
+		<div class="sub_bg"></div>
+		<div class="user_cnt area">
+			<img class="photo3" src="<%=getEnv().getUser_pic()%>" alt="프로필 사진"> 
+			<span class="user_name"><%=getEnv().getUser_name()%></span><span> 님</span><span>(<%=getEnv().getDepart_name()%>, 사원번호: <%=getEnv().getUser_num()%>)</span>
+		</div>
+	</header>		
+<%-- 	<header>
+		<div class="div_left">
+			<span class="title">차상위평가</span> <input type="button" onclick="goMain();" value="메인화면">
+		</div>	
+		<div class="div_left">
+			<span class="info">부서 : <%=getEnv().getDepart_name()%></span><br><span class="info">사원번호 : <%=getEnv().getUser_num()%>, 사원명 : <%=getEnv().getUser_name()%> </span>
+		</div>		
+	</header>	 --%>	
+	<!-- ========== //header ========== -->
+	
+	<!-- ========== gnb ========== -->
+	<%@include file="/WEB-INF/jsp/retail/main/menu.jsp" %>
+	<!-- ========== //gnb ========== -->	
+		
+	<!-- ========== content ========== -->
+	<section class="area">				
+			<h3 class="line">평가 사원 선택</h3>
+			<c:choose>
+			    <c:when test="${json_object.user_count <= 0}">
+			        <span class="subinfo">하위 사원정보가 없습니다.</span>
+			    </c:when>
+
+			    <c:otherwise>
+			    	<table class="tbl_stl tbl_stl3">
+			    		<tr>
+			    			<td>팀명</td>
+			    			<td>상세</td>
+			    			<td>선택</td>
+			    		</tr>
+			    		<c:forEach items="${json_object.user_data}" var="userdata" varStatus="status">		
+		    				<form name="userform${status.index}" id="userform${status.index}" action="/goUpEval.do" method="post" > 											
+								<input type="hidden" id="USER_NUM" name="USER_NUM" value="${userdata.user_num}">
+								<input type="hidden" id="USER_NAME" name="USER_NAME" value="${userdata.user_name}">
+								<input type="hidden" id="DEPART_NUM" name="DEPART_NUM" value="${userdata.depart_num}">
+								<input type="hidden" id="DEPART_NAME" name="DEPART_NAME" value="${userdata.depart_name}">
+							</form>	
+				    		
+				    		<tr>
+				    			<td><h4 class="team_tit">${userdata.depart_name}</h4></td>
+				    			<td>사번: ${userdata.user_num}, 이름: ${userdata.user_name}</td>
+				    			<td><input type="button" class="btn_write" onclick="SelectUser(${status.index});" value="선택"></td>
+				    		</tr>		
+			    		</c:forEach>		    		
+			    	</table>
+<%-- 			    	<table style="text-align: center;">
+						<tbody>							
+							<c:forEach items="${json_object.user_data}" var="userdata" varStatus="status">								
+								<form name="userform${status.index}" id="userform${status.index}" action="/goUpEval.do" method="post" > 											
+									<input type="hidden" id="USER_NUM" name="USER_NUM" value="${userdata.user_num}">
+									<input type="hidden" id="USER_NAME" name="USER_NAME" value="${userdata.user_name}">
+									<input type="hidden" id="DEPART_NUM" name="DEPART_NUM" value="${userdata.depart_num}">
+									<input type="hidden" id="DEPART_NAME" name="DEPART_NAME" value="${userdata.depart_name}">
+								</form>	
+								<tr>
+									<td class="bord">${userdata.depart_name}</td>
+									<td></td>
+									<td rowspan="2"><input type="button" onclick="SelectUser(${status.index});" value="선택"></td>				
+								</tr>	
+								<tr>
+									<td class="normal">사번 : ${userdata.user_num}</td>
+									<td class="normal">이름 : ${userdata.user_name}</td>
+								</tr>	
+							</c:forEach>				
+						</tbody>
+					</table>		 --%>
+			    </c:otherwise>
+			</c:choose>
+
+		 
+	</section>
+	<!-- ========== //content ========== -->
+
+	<!-- ========== footer ========== -->
+	<!-- ========== //footer ========== -->
+ </body>
+</html>

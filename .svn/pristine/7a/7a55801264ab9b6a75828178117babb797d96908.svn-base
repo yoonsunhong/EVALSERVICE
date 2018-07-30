@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="aMainEvalItem">
+
+	<select id="selectCountCode" resultClass="retail.admin.service.AMainEvalItemVO" parameterClass="retail.admin.service.AMainEvalItemVO" >
+			SELECT	COUNT(*) AS CNT
+			  FROM	EVAL_ITEM
+			 WHERE	1 = 1 
+				AND	USE_YN = #USE_YN#
+	</select>
+   
+	<select id="getEvalItemLst" resultClass="retail.admin.service.AMainEvalItemVO" parameterClass="retail.admin.service.AMainEvalItemVO" >
+			SELECT	EVAL_ITEM_NUM
+					 ,	EVAL_ITEM_NAME
+					 ,	EVAL_RATE
+					 ,	USE_YN
+			  FROM	EVAL_ITEM
+			 WHERE	1 = 1
+			<isNotEmpty property="DEPART_NUM">
+				AND	DEPART_NUM = #DEPART_NUM#
+			</isNotEmpty>
+			<isNotEmpty property="USE_YN">
+				AND	USE_YN = #USE_YN#
+			</isNotEmpty>
+			 ORDER	BY EVAL_ITEM_NUM
+	</select>
+		
+	<!-- (항목1개) 부서전체 평가기준 추가 -->
+	<insert id="insertEvalItem"  parameterClass="retail.admin.service.AMainEvalItemVO">
+		    INSERT	INTO EVAL_ITEM   
+		    (		
+						EVAL_ITEM_NUM
+					 ,	DEPART_NUM
+					 ,	EVAL_ITEM_NAME
+					 ,	EVAL_RATE
+					 ,	USE_YN 
+		    ) 
+		    <isEmpty property="DEPART_NUM">
+		    SELECT	NVL(MAX(E.EVAL_ITEM_NUM), 0) + 1
+					 ,	D.DEPART_NUM
+					 ,	#EVAL_ITEM_NAME# 
+					 ,	#EVAL_RATE# 
+					 ,	#USE_YN# 
+			  FROM	EVAL_ITEM E
+					 ,	DEPARTS D
+			 WHERE	D.DEPART_NUM = E.DEPART_NUM (+)
+			 GROUP	BY D.DEPART_NUM
+		    </isEmpty>
+		    <isNotEmpty property="DEPART_NUM">
+			SELECT	NVL(MAX(EVAL_ITEM_NUM), 0) + 1
+					 ,	#DEPART_NUM#
+					 ,	#EVAL_ITEM_NAME# 
+					 ,	#EVAL_RATE# 
+					 ,	#USE_YN#
+			  FROM	EVAL_ITEM
+			 WHERE	DEPART_NUM = #DEPART_NUM#
+		    </isNotEmpty>
+	</insert>
+	
+	<!-- (항목1개) 사원전체 평가기준 추가 -->
+	<insert id="insertUserEvalItem"  parameterClass="retail.admin.service.AMainEvalItemVO">
+			INSERT	INTO EVAL_RATES   
+		    (		
+						USER_NUM
+					 ,	EVAL_ITEM_NUM
+					 ,	EVAL_ITEM_NAME
+					 ,	EVAL_RATE
+					 ,	USE_YN 
+		    ) 
+		    SELECT	U.USER_NUM
+					 ,	NVL(MAX(E.EVAL_ITEM_NUM), 0) + 1
+					 ,	#EVAL_ITEM_NAME# 
+					 ,	#EVAL_RATE#
+					 ,	#USE_YN# 
+			  FROM	EVAL_RATES E
+					 ,	USERS U
+			 WHERE	U.USER_NUM = E.USER_NUM (+)
+			 GROUP	BY U.USER_NUM
+	</insert>
+	
+	<!-- (항목1개) 부서전체 평가기준 삭제 -->			
+	<delete id="deleteEvalItem"  parameterClass="retail.admin.service.AMainEvalItemVO">
+			DELETE	FROM EVAL_ITEM 
+			 WHERE	EVAL_ITEM_NUM = #EVAL_ITEM_NUM# 
+	</delete>
+	
+	<!-- (항목1개) 사원전체 평가기준 삭제 -->		
+	<delete id="deleteUserEvalItem"  parameterClass="retail.admin.service.AMainEvalItemVO">
+			DELETE	FROM EVAL_RATES 
+			 WHERE	EVAL_ITEM_NUM = #EVAL_ITEM_NUM# 
+	</delete>
+	
+	<!-- (항목1개) 평가기준 업데이트 & 부서전체 평가기준 일괄 업데이트 -->
+	<update id="updateEvalItem"  parameterClass="retail.admin.service.AMainEvalItemVO">		
+			UPDATE	EVAL_ITEM
+				 SET	EVAL_ITEM_NAME = #EVAL_ITEM_NAME#
+					<isNotEmpty property="DEPART_NUM">
+					,	EVAL_RATE = #EVAL_RATE#
+					</isNotEmpty>
+					,	USE_YN = #USE_YN#
+			 WHERE	EVAL_ITEM_NUM = #EVAL_ITEM_NUM#
+			<isNotEmpty property="DEPART_NUM">
+				AND	DEPART_NUM = #DEPART_NUM#
+			</isNotEmpty>
+	</update>	
+	
+	<!-- (항목1개) 사원전체 평가기준 일괄 업데이트 -->
+	<update id="updateUserEvalItem"  parameterClass="retail.admin.service.AMainEvalItemVO">		
+			UPDATE	EVAL_RATES
+				 SET	EVAL_ITEM_NAME	 = #EVAL_ITEM_NAME#
+					,	USE_YN = #USE_YN#
+			 WHERE	EVAL_ITEM_NUM = #EVAL_ITEM_NUM#  
+	</update>
+	
+</sqlMap>

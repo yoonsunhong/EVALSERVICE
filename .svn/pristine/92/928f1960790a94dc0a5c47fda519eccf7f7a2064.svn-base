@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="aMainCode">
+
+   		<select id="selectCountCode" resultClass="retail.admin.service.AMainCodeVO" parameterClass="retail.admin.service.AMainCodeVO" >
+		 		  
+		 		 		  SELECT   COUNT(*)  AS CNT
+						    FROM   GRADE_ITEMS
+						   WHERE   GRADE_ITEM_TYPE_CODE   = #GRADE_ITEM_TYPE_CODE# 
+						     AND   GRADE_ITEM_NUM   = #GRADE_ITEM_NUM# 
+		 		  
+		</select>
+   
+  		<select id="getCodeCategory" resultClass="retail.admin.service.AMainCodeVO" parameterClass="retail.admin.service.AMainCodeVO" >
+		 		SELECT  GRADE_ITEM_TYPE_CODE, GRADE_ITEM_NUM, GRADE_ITEM_NAME,  USE_YN ,REMARK
+                  FROM  GRADE_ITEMS
+                 WHERE  GRADE_ITEM_TYPE_CODE =  '0000'   
+                   AND  GRADE_ITEM_NUM <![CDATA[<>]]> '0000'
+                  <isNotEmpty property="GRADE_ITEM_NAME">
+                   AND  GRADE_ITEM_NAME   LIKE   '%'|| #GRADE_ITEM_NAME# || '%'
+                  </isNotEmpty>
+                  <isNotEmpty property="USE_YN">
+                   AND  USE_YN  =      #USE_YN#
+		          </isNotEmpty>
+		         ORDER BY GRADE_ITEM_NUM, SORT
+		</select>
+		
+		<select id="getCodeDetail" resultClass="retail.admin.service.AMainCodeVO" parameterClass="retail.admin.service.AMainCodeVO" >
+		 		SELECT  GRADE_ITEM_NUM ,GRADE_ITEM_NAME ,REMARK ,SORT ,USE_YN, GRADE_ITEM_TYPE_CODE
+                  FROM  GRADE_ITEMS  
+                 WHERE  GRADE_ITEM_TYPE_CODE = #GRADE_ITEM_NUM#
+                   AND  GRADE_ITEM_NUM <![CDATA[<>]]> '0000'
+                 ORDER  BY SORT
+		</select>
+		
+		 
+
+		
+		<update id="updateCodeDetail"  parameterClass="retail.admin.service.AMainCodeVO">
+		
+			UPDATE	GRADE_ITEMS
+				 SET    
+						GRADE_ITEM_NUM             			= #GRADE_ITEM_NUM#
+				    , GRADE_ITEM_NAME         				= #GRADE_ITEM_NAME#
+				    , REMARK 				= #REMARK#
+				    , SORT 					= #SORT#
+				    , USE_YN 						= #USE_YN# 
+				WHERE  GRADE_ITEM_TYPE_CODE 						= #GRADE_ITEM_TYPE_CODE#
+				AND    GRADE_ITEM_NUM 						= #ORIGIN_GRADE_ITEM_NUM# 
+		 
+		</update>
+		
+		<insert id="insertCodeDetail"  parameterClass="retail.admin.service.AMainCodeVO">
+		
+		 	INSERT INTO  GRADE_ITEMS   
+			(  
+		     	  GRADE_ITEM_TYPE_CODE
+		     	, GRADE_ITEM_NUM
+		     	, GRADE_ITEM_NAME
+		     	, REMARK
+		     	, SORT
+		     	, USE_YN
+			) values (
+			      #GRADE_ITEM_TYPE_CODE#
+		     	, #GRADE_ITEM_NUM#
+		     	, #GRADE_ITEM_NAME#
+		     	, #REMARK#
+		     	, #SORT#
+		     	, #USE_YN#
+			)
+		
+		
+		</insert>
+		
+		
+		
+		<insert id="insertCategory"  parameterClass="retail.admin.service.AMainCodeVO">
+			    INSERT INTO  GRADE_ITEMS   
+			    (       GRADE_ITEM_TYPE_CODE 
+				      , GRADE_ITEM_NUM
+				      , GRADE_ITEM_NAME
+				      , REMARK
+				      , USE_YN 
+			    ) VALUES (
+				       '0000'
+				     , (  SELECT  'CD' || LPAD( SUBSTR(MAX(GRADE_ITEM_NUM) , 3 , 4 )+1 , 3 , 0 )    FROM GRADE_ITEMS   WHERE  GRADE_ITEM_TYPE_CODE = '0000'  AND  GRADE_ITEM_NUM <![CDATA[<>]]> '0000'  ) 
+				     , #GRADE_ITEM_NAME# 
+				     , #REMARK# 
+				     , #USE_YN# 
+			    )
+		
+		</insert>
+		
+		<update id="updateCategory"  parameterClass="retail.admin.service.AMainCodeVO">
+		
+		 UPDATE GRADE_ITEMS
+     		SET    GRADE_ITEM_NAME  	=  #GRADE_ITEM_NAME#
+		         , REMARK  	=  #REMARK#
+		         , USE_YN 	=  #USE_YN#
+		  WHERE   GRADE_ITEM_TYPE_CODE 	= '0000'
+		    AND   GRADE_ITEM_NUM 	= #GRADE_ITEM_NUM#
+		
+		
+		
+		</update>
+  
+  
+  
+  
+  <delete id="deleteCode"  parameterClass="retail.admin.service.AMainCodeVO">
+		DECLARE BEGIN
+		 
+		 DELETE  FROM GRADE_ITEMS 
+		  WHERE   GRADE_ITEM_TYPE_CODE 	= '0000'
+		    AND   GRADE_ITEM_NUM 	= #GRADE_ITEM_NUM# ;
+		    
+		 DELETE  FROM GRADE_ITEMS 
+		  WHERE   GRADE_ITEM_TYPE_CODE 	= #GRADE_ITEM_NUM#  ;
+		    
+		    
+		    END;
+		 
+		</delete>
+  
+  	<delete id="deleteCodeDetail"  parameterClass="retail.admin.service.AMainCodeVO">
+		
+		 DELETE  FROM GRADE_ITEMS 
+		  WHERE   GRADE_ITEM_TYPE_CODE 	= #GRADE_ITEM_TYPE_CODE#
+		    AND   GRADE_ITEM_NUM 	= #GRADE_ITEM_NUM#
+		 
+		</delete>
+  
+  
+ 
+     
+     
+
+</sqlMap>

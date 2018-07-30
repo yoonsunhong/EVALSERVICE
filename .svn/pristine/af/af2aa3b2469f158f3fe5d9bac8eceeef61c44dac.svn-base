@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="regist">
+
+
+	<!-- 사원정보 체크 (사원번호, 비번재확인) -->
+	<select id="checkUser" resultClass="retail.regist.service.RegistVO">   	
+		<![CDATA[				
+		SELECT 
+			USER_NUM
+			,USER_NAME
+			,USER_PASS
+		FROM USERS
+		WHERE USER_NAME = #USER_NAME#
+		]]>
+   	</select>
+
+
+	<!-- 초기 비밀번호 설정 -->
+	<update id="updatePass" parameterClass="retail.regist.service.RegistVO">   		 	
+		<![CDATA[				
+		UPDATE USERS
+		SET USER_PASS = #USER_PASS#
+		WHERE USER_NUM = #USER_NUM#
+		AND USER_NAME = #USER_NAME#
+		]]>
+    </update>
+
+</sqlMap>

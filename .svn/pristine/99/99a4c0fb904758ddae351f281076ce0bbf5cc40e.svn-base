@@ -1,0 +1,33 @@
+@CHARSET "UTF-8";
+@import url(http://fonts.googleapis.com/earlyaccess/nanumgothic.css);
+
+body{margin: 0px;  padding: 0px; text-align: center;}			
+header{width: 98vw; height: 16vh; display: inline-block;} 		
+section{width: 98vw; height: 74vh; display: inline-block;}
+
+header .div_left{text-align: left; margin-top:0.5vh;}	
+header .title {font-size: 6vh; text-align: left; margin-left:2vw; font-weight:bold;} 		
+header .info {font-size: 2.5vh; text-align: left; margin-left:2vw; font-weight:bold;} 		
+header input[type="button"]{ width:28vw; height:5vh; font-size:2.8vh; float:right; margin-top:1vh; margin-right:1vh;}
+
+section .div_center {display:inline-block; vertical-align:middle; margin-top:0.5vh;} 	
+section .div_left {text-align: left; margin-top:0.5vh;} 	
+section table input[type="button"]{ width:20vw; height:5vh; font-size:2.5vh;} 		
+section table {text-align: center; width:98vw; height: 55vh; border: 1px solid Gray;}
+
+section p{margin: 1vh;  padding: 0px;}
+section .subtitle {font-size: 4vh; text-align: left; margin-left:2vw; font-weight:bold; margin-top:1.5vh}
+section .subinfo {font-size: 3vh; text-align: left; margin-left:2vw; vertical_align:middle; margin-top:0.5vh}
+section .select1 {width:15vh; height:4vh; font-size: 2.8vh; text-align: left;}
+section .select2 {width:30vh; height:4vh; font-size: 2.8vh; text-align: left;}
+.button1{ width:28vw; height:4.5vh; font-size:2.8vh; float:right; margin-right:2vh;}
+.button2{ width:18vw; height:4.5vh; font-size:2.8vh; float:right; margin-right:2vh; text-align:center;}
+.button3{ width:30vw; height:6vh; font-size:2.8vh;}
+section input[type="text"]{width:40vw; height:4vh; font-size:2.5vh;} 
+
+table{margin-top:1vh;}
+table tr {border: 1px solid Gray;}
+table td {border: 1px solid Gray;}
+table .name{font-size:3vh;}
+table .value{font-size:3vh;}
+table .intitle{font-size:1.5vh; font-weight:bold;}

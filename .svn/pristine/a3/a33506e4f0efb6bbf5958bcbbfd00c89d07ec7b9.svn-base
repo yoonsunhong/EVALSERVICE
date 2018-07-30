@@ -1,0 +1,45 @@
+package retail.common;
+
+import retail.eval.service.GradeItemVO;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+public class JqGraphResult {
+
+	
+	private int result;		
+	
+	private JSONObject mainObject;
+	private JSONArray	gradeArray;
+		
+	public JqGraphResult() {
+		result = 0;
+		
+		mainObject = new JSONObject();
+		gradeArray = new JSONArray();
+	}
+	
+	public void setResult(int result) {
+		this.result = result;		
+	}
+	
+	public void addGrade(GradeItemVO gradeItemVo) {	
+		JSONObject grade = new JSONObject();
+		
+		grade.put("num", gradeItemVo.getGRADE_ITEM_NUM());
+		grade.put("name", gradeItemVo.getGRADE_ITEM_NAME());
+		
+		gradeArray.add(grade);
+	}
+	
+	public JSONObject getJsonObject() {		
+		
+		mainObject = new JSONObject();		
+		mainObject.put("result", result);
+		mainObject.put("gradedata", gradeArray);			
+		
+		return mainObject;
+	}
+	
+	
+}

@@ -1,0 +1,23 @@
+package retail.common;
+
+import net.sf.json.JSONObject;
+
+public class JqResult {
+	
+	private int result;		
+	private JSONObject mainObject;
+		
+	public JqResult() {
+		result = 0;		
+		mainObject = new JSONObject();
+	}
+	
+	public void setResult(int result) {
+		this.result = result;		
+	}
+	
+	public String getJsonString() {			
+		mainObject.put("result", Integer.toString(result));			
+		return mainObject.toString();
+	}
+}
